@@ -2,9 +2,13 @@
   "name": "snyk-cr-monitor",
   "version": "0.5.0",
   "description": "monitor artifactory container images for vulns in snyk",
-  "main": "bin/index.js",
+  "main": "./lib/index.js",
   "scripts": {
-    "test": "jest"
+    "start": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "create": "npm run build && npm run test",
+    "build": "tsc -p .",
+    "test": "sudo npm i -g && snyk-cr-monitor",
+    "refresh": "rm -rf ./node_modules ./package-lock.json && npm install"
   },
   "repository": {
     "type": "git",
@@ -13,7 +17,7 @@
   "author": "scott.esbrandt@snyk.io",
   "license": "ISC",
   "bin": {
-    "snyk-cr-monitor": "./bin/index.js"
+    "snyk-cr-monitor": "./lib/index.js"
   },
   "bugs": {
     "url": "https://github.com/snyk-tech-services/snyk-cr-monitor/issues"
@@ -21,9 +25,11 @@
   "homepage": "https://github.com/snyk-tech-services/snyk-cr-monitor#readme",
   "devDependencies": {
     "@types/debug": "^4.1.5",
-    "@types/node": "^13.11.0"
+    "@types/node": "^13.11.0",
+    "nodemon": "^2.0.2"
   },
   "dependencies": {
+    "@types/yargs": "^15.0.4",
     "axios": "^0.19.2",
     "debug": "^4.1.1",
     "yargs": "^15.3.1"

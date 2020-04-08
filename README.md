@@ -13,7 +13,6 @@ ARTIFACTORY_KEY=<artifactory-key>
 export SNYK_TOKEN SNYK_ORG ARTIFACTORY_SERVER ARTIFACTORY_USER ARTIFACTORY_KEY
 ```
 
-npm run build
 
 npm install -g
 

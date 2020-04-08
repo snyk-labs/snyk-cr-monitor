@@ -6,7 +6,7 @@ set environment
 ```
 SNYK_TOKEN=<snyk-token>
 SNYK_ORG=<snyk-org>
-ARTIFACTORY_SERVER=<artifactory-server>
+ARTIFACTORY_SERVER=<artifactory-server> # just the hostname, e.g. server.jfrog.io
 ARTIFACTORY_USER=<artifactory-user>
 ARTIFACTORY_KEY=<artifactory-key>
 

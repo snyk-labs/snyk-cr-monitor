@@ -6,11 +6,17 @@ const debug = require('debug')('all');
 
 const { spawn, execSync } = require("child_process");
 
-var maxJobs: number = 15;
-var jobSpacing: number = 2500;
+const maxJobs: number = 15;
+const jobSpacing: number = 2500;
 
-var jobIndex = 0;
-var jobs = [];
+var jobIndex: number = 0;
+
+interface job {
+  dockerRepo: string,
+  imageRepo: string
+}
+
+var jobs: job[]  = [];
 
 const argv = yargs
  .usage(`Usage: $0 [OPTIONS]
@@ -40,11 +46,11 @@ const argv = yargs
   .help()
  .argv;
 
-var snykToken = argv["snyk-token"] ? argv["snyk-token"] : process.env.SNYK_TOKEN;
-var snykOrg = argv["snyk-org"] ? argv["snyk-org"] : process.env.SNYK_ORG;
-var artifactoryServername = argv["artifactory-servername"] ? argv["artifactory-servername"] : process.env.ARTIFACTORY_SERVERNAME;
-var artifactoryUser = argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER;
-var artifactoryKey = argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY;
+const snykToken = argv["snyk-token"] ? argv["snyk-token"] : process.env.SNYK_TOKEN;
+const snykOrg = argv["snyk-org"] ? argv["snyk-org"] : process.env.SNYK_ORG;
+const artifactoryServername = argv["artifactory-servername"] ? argv["artifactory-servername"] : process.env.ARTIFACTORY_SERVERNAME;
+const artifactoryUser = argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER;
+const artifactoryKey = argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY;
 
 const getDockerRepos = async () => {  
   return await axios.get(
@@ -80,29 +86,33 @@ const runNextJob = (jobId?: number) => {
   if (jobId !== undefined) {
      i = jobId; //initial jobs
      offset = (jobSpacing * i);
-     //console.log('intial job run for ' + i);
     
   } else {
      i = jobIndex; //tracking subsequent jobs
      offset = jobSpacing;
   }
 
-  //if (i == jobs.length) { process.exit }
-
   if (i < jobs.length) {
-    debug('Scheduled Job ' + i + ' / ' + jobs.length + ' for ' + offset/1000 + ' seconds from now');
+    debug(`Scheduled Job ${i} / ${jobs.length} for ${offset/1000} seconds from now`);
     (function() {
       setTimeout(function() {
-        //console.log('3 seconds later...');
-        //console.log('job No.: ' + i);
-        debug('Testing Job ' + i + ': ' + JSON.stringify(jobs[i]));
-        const child = spawn('docker login snyk-' + jobs[i].dockerRepo + '.jfrog.io -u ' + argv["artifactory-user"] + ' -p ' + argv["artifactory-key"] + ' 2>/dev/null;'
-          + 'snyk auth ' + argv["snyk-token"] + '; ' + 'docker login snyk-' + jobs[i].dockerRepo + '.jfrog.io -u ' + argv["artifactory-user"] + ' -p ' + argv["artifactory-key"] + ' 2>/dev/null; ' + 'snyk monitor --docker snyk-' + jobs[i].dockerRepo + '.jfrog.io/' + jobs[i].imageRepo + '; docker image rm snyk-'+ jobs[i].dockerRepo + '.jfrog.io/' + jobs[i].imageRepo , {
+        debug(`Testing Job ${i}: ${JSON.stringify(jobs[i])}`);
+
+        let execSnykAuth: string = 
+          `snyk auth ${snykToken}; `;
+        let execDockerLogin: string = 
+          `docker login ${artifactoryServername}-${jobs[i].dockerRepo}.jfrog.io -u ${artifactoryUser} -p ${artifactoryKey} 2>/dev/null; `;
+        let execSnykMonitor: string = 
+          `snyk monitor --docker ${artifactoryServername}-${jobs[i].dockerRepo}.jfrog.io/${jobs[i].imageRepo}; `;
+        let execDockerRemove: string = 
+          `docker image rm ${artifactoryServername}-${jobs[i].dockerRepo}.jfrog.io/${jobs[i].imageRepo}`;
+
+        const child = spawn(execSnykAuth.concat(execDockerLogin, execSnykMonitor, execDockerRemove) , {
           detached: true,
           shell: true
         });
         child.on('exit', function(code, signal) {
-          console.log('Job ' + i + ': ' + jobs[i].dockerRepo + '/' + jobs[i].imageRepo + ' exited with code ' + code);
+          console.log(`Job ${i}: ${jobs[i].dockerRepo}/${jobs[i].imageRepo} exited with code ${code}`);
           runNextJob();
         });  },
         offset);
@@ -112,8 +122,8 @@ const runNextJob = (jobId?: number) => {
 }
 
 const runInitialJobs = (jobs) => {
-  debug('Max simultaneous jobs: ' + maxJobs);
-  debug('Job delay: ' + jobSpacing);
+  debug(`Max simultaneous jobs: ${maxJobs}`);
+  debug(`Job delay: ${jobSpacing}`);
   console.log(`Launching jobs with max jobs: ${maxJobs} and job spacing: ${jobSpacing/1000}s  ...`);
   // lets launch first batch of jobs
   for ( let i = jobIndex; i < maxJobs; i++ ) {
@@ -127,10 +137,7 @@ const unique = (value, index, self) => {
 
 const snykCrMonitor = async () => {
   await getDockerRepos().then(async function(response){
-    //let jobs = []; //array of dictionaries to hold the docker repo and image repo names for scanning later
-    //console.log(response.data);
     for await (const dockerRepo of response.data) {
-      //console.log('Processing Docker Repo: ' + dockerRepo.key)
       await getImageRepos(dockerRepo.key).then(async function(response){   
         for await (const imageRepo of response.data.repositories) {
           debug('Found: ' + dockerRepo.key + '/' + imageRepo);
@@ -143,7 +150,7 @@ const snykCrMonitor = async () => {
         }
       });
     }
-    debug('Jobs: ' + JSON.stringify(jobs));
+    debug(`Jobs: ${JSON.stringify(jobs)}`);
     console.log(`Found ${jobs.length} image sets in ${jobs.map(x => x.dockerRepo).filter(unique).length} Docker repos`);
     runInitialJobs(jobs);
   });

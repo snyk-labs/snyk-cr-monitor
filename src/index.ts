@@ -30,8 +30,8 @@ const argv = yargs
        describe: 'Snyk Organization ID to post test results, if not specified $SNYK_ORG',
        demandOption: false
     },
-    'artifactory-servername': {
-       describe: 'Artifactory server name, if not specified $ARTIFACTORY_SERVERNAME',
+    'artifactory-server': {
+       describe: 'Artifactory BASE URI, if not specified $ARTIFACTORY_SERVER',
        demandOption: false
     },
     'artifactory-user': {
@@ -48,13 +48,13 @@ const argv = yargs
 
 const snykToken = argv["snyk-token"] ? argv["snyk-token"] : process.env.SNYK_TOKEN;
 const snykOrg = argv["snyk-org"] ? argv["snyk-org"] : process.env.SNYK_ORG;
-const artifactoryServername = argv["artifactory-servername"] ? argv["artifactory-servername"] : process.env.ARTIFACTORY_SERVERNAME;
+var artifactoryServer = argv["artifactory-server"] ? argv["artifactory-server"] : process.env.ARTIFACTORY_SERVER;
 const artifactoryUser = argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER;
 const artifactoryKey = argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY;
 
 const getDockerRepos = async () => {  
   return await axios.get(
-    `https://${artifactoryServername}.jfrog.io/artifactory/api/repositories?packageType=docker`, 
+    `https://${artifactoryServer}/artifactory/api/repositories?packageType=docker`, 
     { 
       headers: { 
         Accept: "application/json",
@@ -66,7 +66,7 @@ const getDockerRepos = async () => {
 
 const getImageRepos = async (repoKey: string) => {
   return await axios.get(
-    `https://snyk.jfrog.io/artifactory/api/docker/${repoKey}/v2/_catalog`, 
+    `https://${artifactoryServer}/artifactory/api/docker/${repoKey}/v2/_catalog`, 
     { 
       headers: { 
         Accept: "application/json",
@@ -97,15 +97,25 @@ const runNextJob = (jobId?: number) => {
     (function() {
       setTimeout(function() {
         debug(`Testing Job ${i}: ${JSON.stringify(jobs[i])}`);
+        
+        let artifactoryServerFixed: string = '';
+        if (String(artifactoryServer).endsWith("jfrog.io")) {
+          artifactoryServerFixed = String(artifactoryServer).replace(/(.+).jfrog.io/, '$1-' + jobs[i].dockerRepo + '.jfrog.io');
+        }
+        else {
+          artifactoryServerFixed = String(artifactoryServer);
+        }
+
+        debug('artifactoryServer: ' + artifactoryServerFixed);
 
         let execSnykAuth: string = 
           `snyk auth ${snykToken}; `;
         let execDockerLogin: string = 
-          `docker login ${artifactoryServername}-${jobs[i].dockerRepo}.jfrog.io -u ${artifactoryUser} -p ${artifactoryKey} 2>/dev/null; `;
+          `docker login ${artifactoryServerFixed} -u ${artifactoryUser} -p ${artifactoryKey} 2>/dev/null; `;
         let execSnykMonitor: string = 
-          `snyk monitor --docker ${artifactoryServername}-${jobs[i].dockerRepo}.jfrog.io/${jobs[i].imageRepo}; `;
+          `snyk monitor --docker ${artifactoryServerFixed}/${jobs[i].imageRepo}; `;
         let execDockerRemove: string = 
-          `docker image rm ${artifactoryServername}-${jobs[i].dockerRepo}.jfrog.io/${jobs[i].imageRepo}`;
+          `docker image rm ${artifactoryServerFixed}/${jobs[i].imageRepo}`;
 
         const child = spawn(execSnykAuth.concat(execDockerLogin, execSnykMonitor, execDockerRemove) , {
           detached: true,

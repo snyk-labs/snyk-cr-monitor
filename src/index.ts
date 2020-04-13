@@ -6,14 +6,15 @@ const debug = require('debug')('all');
 
 const { spawn, execSync } = require("child_process");
 
-const maxJobs: number = 15;
-const jobSpacing: number = 2500;
+const maxJobs: number = 10;
+const jobSpacing: number = 1500;
 
 var jobIndex: number = 0;
 
 interface job {
   dockerRepo: string,
-  imageRepo: string
+  imageRepo: string,
+  imageTag: string
 }
 
 var jobs: job[]  = [];
@@ -52,8 +53,8 @@ const argv = yargs
 
 const snykToken = argv["snyk-token"] ? argv["snyk-token"] : process.env.SNYK_TOKEN;
 const snykOrg = argv["snyk-org"] ? argv["snyk-org"] : process.env.SNYK_ORG;
-var artifactoryApiHost = argv["artifactory-api-host"] ? argv["artifactory-api-host"] : process.env.ARTIFACTORY_API_HOST;
-var artifactoryCliHost = argv["artifactory-cli-host"] ? argv["artifactory-cli-host"] : process.env.ARTIFACTORY_CLI_HOST;
+const artifactoryApiHost = argv["artifactory-api-host"] ? argv["artifactory-api-host"] : process.env.ARTIFACTORY_API_HOST;
+const artifactoryCliHost = argv["artifactory-cli-host"] ? argv["artifactory-cli-host"] : process.env.ARTIFACTORY_CLI_HOST;
 const artifactoryUser = argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER;
 const artifactoryKey = argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY;
 
@@ -81,13 +82,30 @@ const getImageRepos = async (repoKey: string) => {
   )
 }
 
+const getTagToScan = () => {
+  // todo: allow for AQL searches to find the image tag based on customized search criteria
+  // for now lets use latest 
+  return 'latest';
+}
+
 const sleep = (ms: number) => {
   execSync(`"${process.argv[0]}" -e 'setTimeout(function(){},${ms})'`);
+}
+
+const getLastCommandOutput = (commandOutput: string) => {
+  let lastCommandOutput = '';
+  for (const line of commandOutput.split('\n')) {
+    if (line.trim() != '') {
+      lastCommandOutput = line;
+    }
+  }
+  return lastCommandOutput;
 }
 
 const runNextJob = (jobId?: number) => {
   let i = 0;
   let offset = 0;
+
   if (jobId !== undefined) {
      i = jobId; //initial jobs
      offset = (jobSpacing * i);
@@ -105,27 +123,40 @@ const runNextJob = (jobId?: number) => {
         
         let _artifactoryCliHost: string = String(artifactoryCliHost);
 
-        if (String(artifactoryApiHost).endsWith("jfrog.io")) {
+        if (String(artifactoryApiHost).includes("jfrog.io")) {
           _artifactoryCliHost = String(artifactoryCliHost).replace(/(.+).jfrog.io/, '$1-' + jobs[i].dockerRepo + '.jfrog.io');
         }
-
         debug('_artifactoryCliHost: ' + _artifactoryCliHost);
 
-        let execSnykAuth: string = 
-          `snyk auth ${snykToken}; `;
-        let execDockerLogin: string = 
-          `docker login ${_artifactoryCliHost} -u ${artifactoryUser} -p ${artifactoryKey}; `;
-        let execSnykMonitor: string = 
-          `snyk monitor --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}; `;
-        let execDockerRemove: string = 
-          `docker image rm ${_artifactoryCliHost}/${jobs[i].imageRepo} --force`;
+        let projectName: string = `docker-image|${_artifactoryCliHost.split(':')[0]}/${jobs[i].imageRepo}:${jobs[i].imageTag}`;
+        debug('projectName: ' + projectName);
 
-        const child = spawn(execSnykAuth.concat(execDockerLogin, execSnykMonitor, execDockerRemove) , {
+        let execSnykAuth: string = 
+          `snyk auth ${snykToken} && `;
+        let execDockerLogin: string = 
+          `docker login ${_artifactoryCliHost} -u ${artifactoryUser} -p ${artifactoryKey} && `;
+        let execSnykMonitor: string = 
+          `snyk monitor --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" && `;
+        let execDockerRemove: string = 
+          `docker image rm ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --force`;
+
+        let completeExecString: string = execSnykAuth.concat(execDockerLogin, execSnykMonitor, execDockerRemove);
+        debug('Running Command String: ' + completeExecString);
+
+        let commandOutput: string = '';
+
+        const child = spawn(completeExecString , {
           detached: true,
           shell: true
         });
+        child.stdout.on('data', function (data) {
+          commandOutput += data;
+        });
         child.on('exit', function(code, signal) {
-          console.log(`Job ${i}: ${jobs[i].dockerRepo}/${jobs[i].imageRepo} exited with code ${code}`);
+          console.log(`Job ${i}: ${jobs[i].dockerRepo}/${jobs[i].imageRepo}:${jobs[i].imageTag} exited with code ${code}`);
+          if (code > 0) {
+            console.log(`Job ${i}: ${jobs[i].dockerRepo}/${jobs[i].imageRepo}:${jobs[i].imageTag} output: ${getLastCommandOutput(commandOutput)}`);
+          }
           runNextJob();
         });  },
         offset);
@@ -149,6 +180,7 @@ const unique = (value, index, self) => {
 }
 
 const snykCrMonitor = async () => {
+  console.log('Looking for Docker Images in Artifactory...')
   await getDockerRepos().then(async function(response){
     for await (const dockerRepo of response.data) {
       await getImageRepos(dockerRepo.key).then(async function(response){   
@@ -157,7 +189,8 @@ const snykCrMonitor = async () => {
           jobs.push(
             { 
               dockerRepo: dockerRepo.key,
-              imageRepo: imageRepo
+              imageRepo: imageRepo,
+              imageTag: getTagToScan()
             }
           );
         }

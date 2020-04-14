@@ -27,19 +27,20 @@ export NODE_EXTRA_CA_CERTS=[your CA certificate file path]
 docker build -t snyk-cr-monitor .
 ```
 ```
-docker run -v /var/run/docker.sock:/var/run/docker.sock snyk-cr-monitor \
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
            -e SNYK_TOKEN=$SNYK_TOKEN \
            -e SNYK_ORG=$SNYK_ORG \
            -e ARTIFACTORY_USER=$ARTIFACTORY_USER \
            -e ARTIFACTORY_KEY=$ARTIFACTORY_KEY \
            -e ARTIFACTORY_API_HOST=$ARTIFACTORY_API_HOST \
-           -e ARTIFACTORY_CLI_HOST=$ARTIFACTORY_CLI_HOST
+           -e ARTIFACTORY_CLI_HOST=$ARTIFACTORY_CLI_HOST \
+       snyk-cr-monitor
 ```
 
 ### Use bash wrapper script
 ```
 $ chmod +x snyk-cr-monitor
-$ snyk-cr-monitor
+$ ./snyk-cr-monitor
 ```
 ### Running natively 
   requires node, docker, snyk

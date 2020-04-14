@@ -10,7 +10,6 @@ export ARTIFACTORY_CLI_HOST=<artifactory-cli-host> # host for the cli
 export ARTIFACTORY_USER=<artifactory-user>
 export ARTIFACTORY_KEY=<artifactory-key>
 
-export SNYK_TOKEN SNYK_ORG ARTIFACTORY_API_HOST ARTIFACTORY_CLI_HOST ARTIFACTORY_USER ARTIFACTORY_KEY
 ```
 
 If connecting to an on-prem Artifactory instance over HTTPS with a self-signed certificate, you will need to set
@@ -22,24 +21,30 @@ or
 export NODE_EXTRA_CA_CERTS=[your CA certificate file path]
 ```
 
+=======
+
 Running as a container
 ```
 docker build -t snyk-cr-monitor .
 ```
 ```
-docker run -e BROKER_TOKEN=secret-broker-token \
-           -e GITHUB_TOKEN=secret-github-token \
-           -e PORT=8000 \
-           -e BROKER_CLIENT_URL=http://my.broker.client:8000 \
-       snyk/broker:github-com
+docker run -v /var/run/docker.sock:/var/run/docker.sock snyk-cr-monitor \
+           -e SNYK_TOKEN=$SNYK_TOKEN \
+           -e SNYK_ORG=$SNYK_ORG \
+           -e ARTIFACTORY_USER=$ARTIFACTORY_USER \
+           -e ARTIFACTORY_KEY=$ARTIFACTORY_KEY \
+           -e ARTIFACTORY_API_HOST=$ARTIFACTORY_API_HOST \
+           -e ARTIFACTORY_CLI_HOST=$ARTIFACTORY_CLI_HOST
+```
+
+Use bash wrapper script
+```
+$ chmod +x snyk-cr-monitor
+$ snyk-cr-monitor
 ```
 Running natively
 ```
-npm install -g 
-./snyk-cr-monitor
+$ npm install -g 
+$ snyk-cr-monitor
 ```
-=======
 
-npm install -g
-
-snyk-cr-monitor

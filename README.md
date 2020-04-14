@@ -1,6 +1,5 @@
 # snyk-cr-monitor
 
-needs node, docker, snyk 
 
 set environment
 ```
@@ -22,6 +21,24 @@ or
 ```
 export NODE_EXTRA_CA_CERTS=[your CA certificate file path]
 ```
+
+Running as a container
+```
+docker build -t snyk-cr-monitor .
+```
+```
+docker run -e BROKER_TOKEN=secret-broker-token \
+           -e GITHUB_TOKEN=secret-github-token \
+           -e PORT=8000 \
+           -e BROKER_CLIENT_URL=http://my.broker.client:8000 \
+       snyk/broker:github-com
+```
+Running natively
+```
+npm install -g 
+./snyk-cr-monitor
+```
+=======
 
 npm install -g
 

@@ -39,7 +39,7 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock snyk-cr-monitor \
 ### Use bash wrapper script
 ```
 $ chmod +x snyk-cr-monitor
-$ snyk-cr-monitor
+$ ./snyk-cr-monitor
 ```
 ### Running natively 
   requires node, docker, snyk

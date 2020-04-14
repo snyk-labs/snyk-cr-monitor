@@ -1,6 +1,5 @@
 # snyk-cr-monitor
 
-needs node, docker, snyk 
 
 set environment
 ```
@@ -18,7 +17,19 @@ If connecting to an on-prem Artifactory instance over HTTPS with a self-signed c
 ```
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
-
-npm install -g
-
-snyk-cr-monitor
+Running as a container
+```
+docker build -t snyk-cr-monitor .
+```
+```
+docker run -e BROKER_TOKEN=secret-broker-token \
+           -e GITHUB_TOKEN=secret-github-token \
+           -e PORT=8000 \
+           -e BROKER_CLIENT_URL=http://my.broker.client:8000 \
+       snyk/broker:github-com
+```
+Running natively
+```
+npm install -g 
+./snyk-cr-monitor
+```

@@ -20,7 +20,7 @@ or
 export NODE_EXTRA_CA_CERTS=[your CA certificate file path]
 ```
 
-=======
+
 
 ### Running as a container
 ```

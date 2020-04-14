@@ -37,6 +37,8 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock \
        snyk-cr-monitor
 ```
 
+* If extra environment variables are needed for self-signed certs, add them to the command above or the script below.
+
 ### Use bash wrapper script
 ```
 $ chmod +x snyk-cr-monitor

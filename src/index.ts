@@ -132,13 +132,13 @@ const runNextJob = (jobId?: number) => {
         debug('projectName: ' + projectName);
 
         let execSnykAuth: string = 
-          `snyk auth ${snykToken} && `;
+          `snyk auth ${snykToken} 2>&1 && `;
         let execDockerLogin: string = 
-          `docker login ${_artifactoryCliHost} -u ${artifactoryUser} -p ${artifactoryKey} && `;
+          `docker login ${_artifactoryCliHost} -u ${artifactoryUser} -p ${artifactoryKey} 2>&1 && `;
         let execSnykMonitor: string = 
-          `snyk monitor --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" && `;
+          `snyk monitor --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" 2>&1 && `;
         let execDockerRemove: string = 
-          `docker image rm ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --force`;
+          `docker image rm ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --force 2>&1`;
 
         let completeExecString: string = execSnykAuth.concat(execDockerLogin, execSnykMonitor, execDockerRemove);
         debug('Running Command String: ' + completeExecString);

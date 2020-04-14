@@ -42,7 +42,7 @@ Use bash wrapper script
 $ chmod +x snyk-cr-monitor
 $ snyk-cr-monitor
 ```
-Running natively
+Running natively - requires node, docker, snyk
 ```
 $ npm install -g 
 $ snyk-cr-monitor

@@ -6,8 +6,8 @@ const debug = require('debug')('all');
 
 const { spawn, execSync } = require("child_process");
 
-const maxJobs: number = 10;
-const jobSpacing: number = 1500;
+var _maxJobs: number = 10;
+var _jobSpacing: number = 1500;
 
 var jobIndex: number = 0;
 
@@ -46,17 +46,30 @@ const argv = yargs
     'artifactory-key': {
        describe: 'Artifactory API Key, if not specified $ARTIFACTORY_KEY',
        demandOption: false
+    },
+    'max-jobs': {
+      describe: 'Number of simultaneous jobs to run',
+      demandOption: false
+    },
+    'job-spacing': {
+      describe: 'milliseconds in between job launches',
+      demandOption: false
     }
   })
   .help()
  .argv;
 
-const snykToken = argv["snyk-token"] ? argv["snyk-token"] : process.env.SNYK_TOKEN;
-const snykOrg = argv["snyk-org"] ? argv["snyk-org"] : process.env.SNYK_ORG;
-const artifactoryApiHost = argv["artifactory-api-host"] ? argv["artifactory-api-host"] : process.env.ARTIFACTORY_API_HOST;
-const artifactoryCliHost = argv["artifactory-cli-host"] ? argv["artifactory-cli-host"] : process.env.ARTIFACTORY_CLI_HOST;
-const artifactoryUser = argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER;
-const artifactoryKey = argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY;
+const snykToken: string = String(argv["snyk-token"] ? argv["snyk-token"] : process.env.SNYK_TOKEN);
+const snykOrg: string = String(argv["snyk-org"] ? argv["snyk-org"] : process.env.SNYK_ORG);
+const artifactoryApiHost: string = String(argv["artifactory-api-host"] ? argv["artifactory-api-host"] : process.env.ARTIFACTORY_API_HOST);
+const artifactoryCliHost: string = String(argv["artifactory-cli-host"] ? argv["artifactory-cli-host"] : process.env.ARTIFACTORY_CLI_HOST);
+const artifactoryUser: string = String(argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER);
+const artifactoryKey: string = String(argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY);
+var maxJobs: number = Number(argv["max-jobs"] ? argv["max-jobs"] : process.env.SNYK_CR_MONITOR_MAX_JOBS);
+var jobSpacing: number = Number(argv["job-spacing"] ? argv["job-spacing"] : process.env.SNYK_CR_MONITOR_JOB_SPACING);
+
+if (!maxJobs) { maxJobs = _maxJobs; }
+if (!jobSpacing) {jobSpacing = _jobSpacing; }
 
 const getDockerRepos = async () => {  
   return await axios.get(

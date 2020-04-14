@@ -128,6 +128,11 @@ const runNextJob = (jobId?: number) => {
         }
         debug('_artifactoryCliHost: ' + _artifactoryCliHost);
 
+        let orgString: string = '';
+        if (snykOrg) { 
+          orgString = `--org=${snykOrg}`; 
+        }
+
         let projectName: string = `docker-image|${_artifactoryCliHost.split(':')[0]}/${jobs[i].imageRepo}:${jobs[i].imageTag}`;
         debug('projectName: ' + projectName);
 
@@ -136,7 +141,7 @@ const runNextJob = (jobId?: number) => {
         let execDockerLogin: string = 
           `docker login ${_artifactoryCliHost} -u ${artifactoryUser} -p ${artifactoryKey} 2>&1 && `;
         let execSnykMonitor: string = 
-          `snyk monitor --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" 2>&1 && `;
+          `snyk monitor ${orgString} --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" 2>&1 && `;
         let execDockerRemove: string = 
           `docker image rm ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --force 2>&1`;
 

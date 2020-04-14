@@ -18,6 +18,10 @@ If connecting to an on-prem Artifactory instance over HTTPS with a self-signed c
 ```
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
+or
+```
+export NODE_EXTRA_CA_CERTS=[your CA certificate file path]
+```
 
 npm install -g
 

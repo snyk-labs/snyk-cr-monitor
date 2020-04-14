@@ -53,3 +53,4 @@ $ snyk-cr-monitor
 
 ### TODO
 - add support for AQL file option for customer image tag searches
+- add tests

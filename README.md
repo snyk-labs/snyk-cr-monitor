@@ -1,7 +1,6 @@
 # snyk-cr-monitor
 
-
-set environment
+###set environment
 ```
 export SNYK_TOKEN=<snyk-token>
 export SNYK_ORG=<snyk-org>
@@ -23,7 +22,7 @@ export NODE_EXTRA_CA_CERTS=[your CA certificate file path]
 
 =======
 
-Running as a container
+###Running as a container
 ```
 docker build -t snyk-cr-monitor .
 ```
@@ -37,14 +36,17 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock snyk-cr-monitor \
            -e ARTIFACTORY_CLI_HOST=$ARTIFACTORY_CLI_HOST
 ```
 
-Use bash wrapper script
+###Use bash wrapper script
 ```
 $ chmod +x snyk-cr-monitor
 $ snyk-cr-monitor
 ```
-Running natively - requires node, docker, snyk
+###Running natively 
+  requires node, docker, snyk
 ```
 $ npm install -g 
 $ snyk-cr-monitor
 ```
 
+### TODO
+- add support for AQL file option for customer image tag searches

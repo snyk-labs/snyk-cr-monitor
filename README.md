@@ -6,7 +6,7 @@
 - Iterate through results, running `snyk monitor` against each `*repo*` for the `*latest*` image
 - Provides mechanism to run multiple jobs simultaneously that is configurable
 
-# References
+### References
 
 **API** **Documentation** [Artificatory APIs](https://www.jfrog.com/confluence/display/RTF6X/Artifactory+REST+API#ArtifactoryRESTAPI-Authentication)
 

@@ -24,7 +24,8 @@ export SNYK_ORG=<snyk_org_id>
 export ARTIFACTORY_API_HOST=<api_hostname> 
 
 # The hostname (and optional port) of the host used with docker login
-# This is separate from the API host because they may be different
+# This is separate from the API host because they may be different, 
+# for example onpremartifactory.example.com:5000
 export ARTIFACTORY_CLI_HOST=<cli_endpoint_hostname>
 
 # The username for which the api key being used is created for

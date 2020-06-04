@@ -39,7 +39,7 @@ export ARTIFACTORY_KEY=<artifactory_api_key>
 optional: 
 ```
 # Number of container scanning jobs that may be simultaneously running
-# if unspecified, default is 10
+# if unspecified, default is 5
 export SNYK_CR_MONITOR_MAX_JOBS=<num-jobs>
 
 # Number of milliseconds between job launches to space requests out

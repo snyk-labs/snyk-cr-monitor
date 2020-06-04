@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import * as yargs from 'yargs';
 import axios from 'axios';
 const debug = require('debug')('all');
@@ -8,7 +7,6 @@ const { spawn, execSync } = require("child_process");
 
 var _maxJobs: number = 10;
 var _jobSpacing: number = 1500;
-
 var jobIndex: number = 0;
 
 interface job {
@@ -221,3 +219,5 @@ const snykCrMonitor = async () => {
 }
 
 snykCrMonitor();
+
+export default { getLastCommandOutput };

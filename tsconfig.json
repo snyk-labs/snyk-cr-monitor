@@ -7,9 +7,12 @@
     "outDir": "lib",
     "rootDir": "src",
     "strict": true,
-    "types": ["node"],
+    "types": ["reflect-metadata", "jest", "node"],
+    "typeRoots": ["./types", "./node_modules/@types"],
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "noImplicitAny": false
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

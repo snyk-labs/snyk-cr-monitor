@@ -1,2 +1,5 @@
 #!/usr/bin/env node
-export {};
+declare const _default: {
+    getLastCommandOutput: (commandOutput: string) => string;
+};
+export default _default;

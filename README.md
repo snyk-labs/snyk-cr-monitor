@@ -1,5 +1,8 @@
 # snyk-cr-monitor
 
+[![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services}/snyk-cr-monitor/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-cr-monitor)
+
+
 ### Basic Flow
 
 - Query the Artifactory API to gather Docker repos to test

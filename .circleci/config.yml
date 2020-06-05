@@ -9,7 +9,7 @@ jobs:
       - checkout
       - run:
           name: "Install Dependencies"
-          command: 'npm install -g'
+          command: 'sudo npm install -g'
       - run:
           name: "Build"
           command: 'npm run build'
@@ -27,7 +27,7 @@ jobs:
       - checkout
       - run:
           name: "Install Dependencies"
-          command: 'npm install -g'
+          command: 'sudo npm install -g'
       - run:
           name: "Build"
           command: 'npm run build'

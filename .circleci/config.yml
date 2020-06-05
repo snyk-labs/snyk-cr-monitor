@@ -69,3 +69,4 @@ workflows:
                     branches:
                         only:
                         - /pull\/[0-9]+/
+

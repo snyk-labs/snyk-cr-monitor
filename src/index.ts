@@ -45,6 +45,11 @@ const argv = yargs
        describe: 'Artifactory API Key, if not specified $ARTIFACTORY_KEY',
        demandOption: false
     },
+    'all-tags': {
+      describe: 'Artifactory API Key, if not specified $ARTIFACTORY_KEY',
+      demandOption: false,
+      type: 'boolean'
+   },
     'max-jobs': {
       describe: 'Number of simultaneous jobs to run',
       demandOption: false
@@ -63,6 +68,7 @@ const artifactoryApiHost: string = String(argv["artifactory-api-host"] ? argv["a
 const artifactoryCliHost: string = String(argv["artifactory-cli-host"] ? argv["artifactory-cli-host"] : process.env.ARTIFACTORY_CLI_HOST);
 const artifactoryUser: string = String(argv["artifactory-user"] ? argv["artifactory-user"] : process.env.ARTIFACTORY_USER);
 const artifactoryKey: string = String(argv["artifactory-key"] ? argv["artifactory-key"] : process.env.ARTIFACTORY_KEY);
+const allTags: boolean = Boolean(argv["all-tags"]);
 var maxJobs: number = Number(argv["max-jobs"] ? argv["max-jobs"] : process.env.SNYK_CR_MONITOR_MAX_JOBS);
 var jobSpacing: number = Number(argv["job-spacing"] ? argv["job-spacing"] : process.env.SNYK_CR_MONITOR_JOB_SPACING);
 
@@ -93,10 +99,30 @@ const getImageRepos = async (repoKey: string) => {
   )
 }
 
-const getTagToScan = () => {
+const getTagToScan = async (repoKey: string, imageName: string) => {
   // todo: allow for AQL searches to find the image tag based on customized search criteria
-  // for now lets use latest 
-  return 'latest';
+  // for now lets use latest or all tags
+  // todo: always get all the image tags, when a specific tag is specified, filter the list
+  // so that the tag is returned if present, and if not is empty (will work for all cases)
+  
+  if (allTags) {
+    return (await getAllImageTags(repoKey, imageName)).data.tags
+  }
+  else {
+    return ["latest"];
+  }
+}
+
+const getAllImageTags = async (repoKey: string, imageName: string) => {
+  return await axios.get(
+    `https://${artifactoryApiHost}/artifactory/api/docker/${repoKey}/v2/${imageName}/tags/list`, 
+    { 
+      headers: { 
+        Accept: "application/json",
+        "X-JFrog-Art-Api": artifactoryKey
+      } 
+    }
+  )
 }
 
 const sleep = (ms: number) => {
@@ -134,9 +160,9 @@ const runNextJob = (jobId?: number) => {
         
         let _artifactoryCliHost: string = String(artifactoryCliHost);
 
-        if (String(artifactoryApiHost).includes("jfrog.io")) {
-          _artifactoryCliHost = String(artifactoryCliHost).replace(/(.+).jfrog.io/, '$1-' + jobs[i].dockerRepo + '.jfrog.io');
-        }
+        //if (String(artifactoryApiHost).includes("jfrog.io")) {
+        //  _artifactoryCliHost = String(artifactoryCliHost).replace(/(.+).jfrog.io/, '$1-' + jobs[i].dockerRepo + '.jfrog.io');
+        //}
         debug('_artifactoryCliHost: ' + _artifactoryCliHost);
 
         let orgString: string = '';
@@ -144,15 +170,18 @@ const runNextJob = (jobId?: number) => {
           orgString = `--org=${snykOrg}`; 
         }
 
-        let projectName: string = `docker-image|${_artifactoryCliHost.split(':')[0]}/${jobs[i].imageRepo}:${jobs[i].imageTag}`;
+        //let projectName: string = `docker-image|${_artifactoryCliHost.split(':')[0]}/${jobs[i].imageRepo}:${jobs[i].imageTag}`;
+        let projectName: string = `docker-image|${_artifactoryCliHost.split(':')[0]}/${jobs[i].dockerRepo}/${jobs[i].imageRepo}:${jobs[i].imageTag}`;
         debug('projectName: ' + projectName);
 
         let execSnykAuth: string = 
           `snyk auth ${snykToken} 2>&1 && `;
         let execDockerLogin: string = 
           `docker login ${_artifactoryCliHost} -u ${artifactoryUser} -p ${artifactoryKey} 2>&1 && `;
+        //let execSnykMonitor: string = 
+        //  `snyk monitor ${orgString} --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" 2>&1 && `;
         let execSnykMonitor: string = 
-          `snyk monitor ${orgString} --docker ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" 2>&1 && `;
+          `snyk monitor ${orgString} --docker ${_artifactoryCliHost}/${jobs[i].dockerRepo}/${jobs[i].imageRepo}:${jobs[i].imageTag} --project-name="${projectName}" 2>&1 && `;
         let execDockerRemove: string = 
           `docker image rm ${_artifactoryCliHost}/${jobs[i].imageRepo}:${jobs[i].imageTag} --force 2>&1`;
 
@@ -196,19 +225,25 @@ const unique = (value, index, self) => {
 }
 
 const snykCrMonitor = async () => {
+  debug(`--all-tags set to ${allTags}`)
   console.log('Looking for Docker Images in Artifactory...')
   await getDockerRepos().then(async function(response){
     for await (const dockerRepo of response.data) {
       await getImageRepos(dockerRepo.key).then(async function(response){   
         for await (const imageRepo of response.data.repositories) {
           debug('Found: ' + dockerRepo.key + '/' + imageRepo);
-          jobs.push(
-            { 
-              dockerRepo: dockerRepo.key,
-              imageRepo: imageRepo,
-              imageTag: getTagToScan()
-            }
-          );
+            await getTagToScan(dockerRepo.key, imageRepo).then(async function(response){
+              for await (const imageTag of response) {
+                debug('Found: ' + imageTag)
+                jobs.push(
+                  { 
+                    dockerRepo: dockerRepo.key,
+                    imageRepo: imageRepo,
+                    imageTag: imageTag
+                  }
+                );
+                }
+            })
         }
       });
     }

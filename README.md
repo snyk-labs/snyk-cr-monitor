@@ -1,20 +1,47 @@
 # snyk-cr-monitor
-
+[![CircleCI](https://circleci.com/gh/snyk-tech-services/snyk-cr-monitor.svg?style=svg&circle-token=bfb34e49aa301cfa4ef4272541360a475ff95ad4)](https://circleci.com/gh/snyk-tech-services/snyk-cr-monitor)
 [![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-cr-monitor/badge.svg)](https://snyk.io/test/github/snyk-tech-services/snyk-cr-monitor)
 
 
 ### Basic Flow
 
 - Query the Artifactory API to gather Docker repos to test
-- Iterate through results, running `snyk monitor` against each `*repo*` for the `*latest*` image
+- Iterate through results, running `snyk monitor` against each `*repo*` for either the `*latest*` image tag, or all tags using the `--all-tags` option
 - Provides mechanism to run multiple jobs simultaneously that is configurable
 
 Note that `snyk monitor` will run a `docker pull` behind-the-scenes.  
 
 Please use the `SNYK_CR_MONITOR_MAX_JOBS` and `SNYK_CR_MONITOR_JOB_SPACING` variables, as describe below, to control the throughput to your docker repos, as pulling too many images at once may be taxing on the system.
 
+### Usage
+```
+Usage: ./snyk-cr-monitor [OPTIONS]
+              If no arguments are specified, values will be picked up from
+              environment variables
+
+Options:
+  --version               Show version number                          [boolean]
+  --snyk-token            Snyk API Key, if not specified $SNYK_TOKEN
+  --snyk-org              Snyk Organization ID to post test results, if not
+                          specified $SNYK_ORG
+  --artifactory-api-host  Artifactory API HOST, if not specified
+                          $ARTIFACTORY_API_HOST
+  --artifactory-cli-host  Artifactory host used for docker login/pull, if not
+                          specified $ARTIFACTORY_CLI_HOST
+  --artifactory-user      Artifactory API User, if not speciied
+                          $ARTIFACTORY_USER
+  --artifactory-key       Artifactory API Key, if not specified $ARTIFACTORY_KEY
+  --all-tags              Process all image tags, if omitted then "latest" tags
+                          are processed                                [boolean]
+  --docker-repo           Optionally process only the docker repo with a given
+                          name
+  --max-jobs              Number of simultaneous jobs to run
+  --job-spacing           milliseconds in between job launches
+  --help                  Show help                                    [boolean]
+  ```
+
 ### set environment
-required:
+required (if not set at command line)
 ```
 # Your Snyk Api Key (General Settings -> API Token, or Settings -> Service Accounts)
 export SNYK_TOKEN=<snyk_api_key>

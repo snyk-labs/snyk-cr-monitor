@@ -4,7 +4,6 @@
 
 
 ### Basic Flow
-
 - Query the Artifactory API to gather Docker repos to test
 - Iterate through results, running `snyk monitor` against each `*repo*` for either the `*latest*` image tag, or all tags using the `--all-tags` option
 - Provides mechanism to run multiple jobs simultaneously that is configurable

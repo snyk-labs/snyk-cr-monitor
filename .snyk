@@ -12,19 +12,19 @@ ignore:
     - yargs > cliui > wrap-ansi > string-width > strip-ansi > ansi-regex:
         reason: no patch available
         expires: '2021-12-03T13:20:43.286Z'
-      yargs > cliui > string-width > strip-ansi > ansi-regex:
-        reason: no good remediation available
-        expires: '2022-01-29T11:08:23.106Z'
     - yargs > cliui > string-width > strip-ansi > ansi-regex:
         reason: no patch available
         expires: '2021-12-03T13:22:40.208Z'
-      yargs > cliui > wrap-ansi > strip-ansi > ansi-regex:
-        reason: no good remediation available
-        expires: '2022-01-29T11:08:23.106Z'
     - yargs > cliui > wrap-ansi > strip-ansi > ansi-regex:
         reason: no patch available
         expires: '2021-12-03T13:22:40.208Z'
-      yargs > cliui > wrap-ansi > string-width > strip-ansi > ansi-regex:
+    - yargs > cliui > string-width > strip-ansi > ansi-regex:
+        reason: no good remediation available
+        expires: '2022-01-29T11:08:23.106Z'
+    - yargs > cliui > wrap-ansi > strip-ansi > ansi-regex:
+        reason: no good remediation available
+        expires: '2022-01-29T11:08:23.106Z'
+    - yargs > cliui > wrap-ansi > string-width > strip-ansi > ansi-regex:
         reason: no good remediation available
         expires: '2022-01-29T11:08:23.106Z'
 patch: {}
